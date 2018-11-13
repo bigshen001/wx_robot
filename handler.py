@@ -3,7 +3,7 @@ from pathlib import Path
 
 import itchat
 
-from global_var import msg_deque
+from global_var import msg_deque, tz_beijing
 
 
 class BaseMsgHandler:
@@ -14,7 +14,6 @@ class BaseMsgHandler:
         to_user = itchat.search_friends(userName=to_user_name)
         msg_type = msg['MsgType']
 
-        tz_beijing = timezone(offset=timedelta(hours=8))
         now = datetime.now(tz=tz_beijing)
 
         self.msg = msg
@@ -124,8 +123,8 @@ class MsgHandler(BaseMsgHandler):
 
 class Wechat:
     @staticmethod
-    def send_to_friend(msg: str = '', remark_name: str = '', nick_name: str = '', test=False):
-        if test:
+    def send_to_friend(msg: str = '', remark_name: str = '', nick_name: str = '', alive=False):
+        if alive:
             itchat.send(msg, toUserName='filehelper')
         else:
             if remark_name == '':

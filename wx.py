@@ -1,13 +1,15 @@
 import re
-from collections import OrderedDict
+from datetime import datetime
 from pathlib import Path
 from platform import system
+from time import sleep
 
 import itchat
+import schedule
 from itchat.content import TEXT, RECORDING, ATTACHMENT, PICTURE, VIDEO, SHARING, NOTE
 
-from handler import MsgHandler
-from global_var import msg_deque
+from handler import MsgHandler, Wechat
+from global_var import msg_deque, tz_beijing
 
 if not Path('backup').exists():
     Path('backup').mkdir()
@@ -64,10 +66,12 @@ if __name__ == '__main__':
                           loginCallback=login_start, exitCallback=logout)
     elif system() == 'Linux':
         itchat.auto_login(hotReload=True, enableCmdQR=2, loginCallback=login_start, exitCallback=logout)
-    itchat.run()
-    # itchat.run(blockThread=False)
-    # wechat = Wechat()
-    # schedule.every().day.at('12:42').do(wechat.send, msg='test', nick_name='清蓝君')
-    # while True:
-    #     schedule.run_pending()
-    #     sleep(1)
+    # itchat.run()
+    itchat.run(blockThread=False)
+    wechat = Wechat()
+    now = datetime.now(tz=tz_beijing)
+    message = f"{now:%H:%M:%S}:alive!"
+    schedule.every().hour.do(wechat.send_to_friend, msg=message, alive=True)
+    while True:
+        schedule.run_pending()
+        sleep(1)
