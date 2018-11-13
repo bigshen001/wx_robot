@@ -122,8 +122,8 @@ class MsgHandler(BaseMsgHandler):
 
 
 class Wechat:
-    @staticmethod
-    def send_to_friend(msg: str = '', remark_name: str = '', nick_name: str = '', alive=False):
+    @classmethod
+    def send_to_friend(cls, msg: str = '', remark_name: str = '', nick_name: str = '', alive=False):
         if alive:
             itchat.send(msg, toUserName='filehelper')
         else:
@@ -132,9 +132,16 @@ class Wechat:
             to = itchat.search_friends(name=remark_name)[0]
             itchat.send(msg, toUserName=to['UserName'])
 
-    @staticmethod
-    def send_to_chatroom(msg: str = '', remark_name: str = '', nick_name: str = ''):
+    @classmethod
+    def send_to_chatroom(cls, msg: str = '', remark_name: str = '', nick_name: str = ''):
         if remark_name == '':
             remark_name = nick_name
         to = itchat.search_chatrooms(name=remark_name)[0]
         itchat.send(msg, toUserName=to['UserName'])
+
+    @classmethod
+    def send_alive_msg(cls):
+        """send alive msg to filehelper"""
+        now = datetime.now(tz=tz_beijing)
+        message = f"{now:%H:%M:%S}:alive!"
+        cls.send_to_friend(message, alive=True)

@@ -68,10 +68,7 @@ if __name__ == '__main__':
         itchat.auto_login(hotReload=True, enableCmdQR=2, loginCallback=login_start, exitCallback=logout)
     # itchat.run()
     itchat.run(blockThread=False)
-    wechat = Wechat()
-    now = datetime.now(tz=tz_beijing)
-    message = f"{now:%H:%M:%S}:alive!"
-    schedule.every().hour.do(wechat.send_to_friend, msg=message, alive=True)
+    schedule.every().hour.do(Wechat.send_alive_msg)
     while True:
         schedule.run_pending()
         sleep(1)
