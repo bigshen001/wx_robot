@@ -1,7 +1,10 @@
-from datetime import timezone, timedelta, datetime, date
+from datetime import timedelta, datetime, date
 from pathlib import Path
+from sched import scheduler
+from time import mktime, sleep
 
 import itchat
+import schedule
 
 from global_var import msg_deque, tz_beijing
 
@@ -145,3 +148,31 @@ class Wechat:
         now = datetime.now(tz=tz_beijing)
         message = f"{now:%H:%M:%S}:alive!"
         cls.send_to_friend(message, alive=True)
+
+
+class HereScheduler:
+    def __init__(self):
+        self.scheduler = scheduler(self.__class__.get_now)
+
+    @classmethod
+    def get_now(cls):
+        current = datetime.now(tz=tz_beijing)
+        return mktime(current.timetuple())
+
+    @classmethod
+    def period_hour_run(cls, func=Wechat.send_alive_msg):
+        """receive a func,run it every hour."""
+        # schedule.every().second.do(func)
+        schedule.every().hour.do(func)
+        while True:
+            schedule.run_pending()
+            sleep(1)
+
+    def run_scheduler(self):
+        """run every hour alive"""
+        now = datetime.now(tz=tz_beijing)
+        run_time = now + timedelta(hours=1) - timedelta(minutes=now.minute) - timedelta(seconds=now.second)
+        # run_time = now + timedelta(seconds=5)
+        run_time = mktime(run_time.timetuple())
+        self.scheduler.enterabs(run_time, 1, self.__class__.period_hour_run)
+        self.scheduler.run()

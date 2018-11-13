@@ -1,14 +1,16 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
+from functools import partial
 from pathlib import Path
 from platform import system
-from time import sleep
+from sched import scheduler
+from time import sleep, mktime
 
 import itchat
 import schedule
 from itchat.content import TEXT, RECORDING, ATTACHMENT, PICTURE, VIDEO, SHARING, NOTE
 
-from handler import MsgHandler, Wechat
+from handler import MsgHandler, Wechat, HereScheduler
 from global_var import msg_deque, tz_beijing
 
 if not Path('backup').exists():
@@ -66,9 +68,8 @@ if __name__ == '__main__':
                           loginCallback=login_start, exitCallback=logout)
     elif system() == 'Linux':
         itchat.auto_login(hotReload=True, enableCmdQR=2, loginCallback=login_start, exitCallback=logout)
+
     # itchat.run()
     itchat.run(blockThread=False)
-    schedule.every().hour.do(Wechat.send_alive_msg)
-    while True:
-        schedule.run_pending()
-        sleep(1)
+    here_scheduler = HereScheduler()
+    here_scheduler.run_scheduler()
