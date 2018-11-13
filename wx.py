@@ -25,14 +25,15 @@ def auto_handler(msg):
         # save msg for backup
         msg_handler.save_msg()
         # robot
-        msg_handler.start_robot()
+    msg_handler.start_robot()
 
 
 @itchat.msg_register([NOTE])
 def backup_revoke(msg):
     """backup the revoke message"""
     msg_handler = MsgHandler(msg)
-    if msg['Text'].endswith('撤回了一条消息'):
+    text = msg['Text']
+    if text.endswith('撤回了一条消息') and text != '你撤回了一条消息':
         res = re.search(r'<msgid>([0-9]+)</msgid>', msg['Content'])
         # get revoke msg id
         msgid = res.group(1)
@@ -104,10 +105,10 @@ class BaseMsgHandler:
 
         if self.msg_time.hour >= 23:
             # 凌晨之前
-            td = today = date.today()
+            td = date.today()
         else:
             # 凌晨之后
-            td = today = date.today() - timedelta(days=1)
+            td = date.today() - timedelta(days=1)
         today23 = datetime(td.year, td.month, td.day, 22, 0, 0, tzinfo=self.tz)
         tomorrow7 = today23 + timedelta(hours=8)
         if today23 < self.msg_time < tomorrow7:
@@ -127,12 +128,21 @@ class MsgHandler(BaseMsgHandler):
             self.notice_to_me()
 
     def start_robot(self):
-        """Identify and reply to certain text"""
+        """
+        Identify and reply to certain text
+        1.在吗，在不在，zaima,在ma zai吗，在么
+
+        """
         if self.msg['Type'] == 'Text':
             message = self.msg.text
-            if '在吗' in message or '在不在' in message:
+            # reply is online?
+            certain_text = ['在吗', '在不在', 'zaima', '在ma', 'zai吗', '在么']
+            if any([i in message for i in certain_text]):
                 reply = f"消息助手：此消息已拦截。\n有事请直言，不要问在不在"
                 self.reply_from_user(reply)
+            elif self.is_me() and any([i == message for i in ['?', '？']]):
+                # is alive?
+                self.notice_to_me('Still Alive!')
 
     def save_msg(self):
         """save msg to  message_deque,if not text，and save file to backup/"""
@@ -188,8 +198,7 @@ if __name__ == '__main__':
         itchat.auto_login(hotReload=True,
                           loginCallback=login_start, exitCallback=logout)
     elif system() == 'Linux':
-        itchat.auto_login(hotReload=True, enableCmdQR=2
-                          , loginCallback=login_start, exitCallback=logout)
+        itchat.auto_login(hotReload=True, enableCmdQR=2, loginCallback=login_start, exitCallback=logout)
     itchat.run()
     # itchat.run(blockThread=False)
     # wechat = Wechat()
