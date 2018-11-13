@@ -1,17 +1,12 @@
 import re
-from datetime import datetime, timedelta
-from functools import partial
 from pathlib import Path
 from platform import system
-from sched import scheduler
-from time import sleep, mktime
 
 import itchat
-import schedule
 from itchat.content import TEXT, RECORDING, ATTACHMENT, PICTURE, VIDEO, SHARING, NOTE
 
-from handler import MsgHandler, Wechat, HereScheduler
-from global_var import msg_deque, tz_beijing
+from global_var import msg_deque
+from handler import MsgHandler, HereScheduler
 
 if not Path('backup').exists():
     Path('backup').mkdir()

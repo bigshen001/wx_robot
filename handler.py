@@ -146,7 +146,7 @@ class Wechat:
     def send_alive_msg(cls):
         """send alive msg to filehelper"""
         now = datetime.now(tz=tz_beijing)
-        message = f"{now:%H:%M:%S}:alive!"
+        message = f"{now:%H:%M:%S:%f}:alive!"
         cls.send_to_friend(message, alive=True)
 
 
@@ -166,12 +166,15 @@ class HereScheduler:
         schedule.every().hour.do(func)
         while True:
             schedule.run_pending()
-            sleep(1)
+            sleep(0.01)
 
     def run_scheduler(self):
         """run every hour alive"""
         now = datetime.now(tz=tz_beijing)
-        run_time = now + timedelta(hours=1) - timedelta(minutes=now.minute) - timedelta(seconds=now.second)
+        run_time = now + timedelta(hours=1) \
+                   - timedelta(minutes=now.minute) \
+                   - timedelta(seconds=now.second) \
+                   - timedelta(microseconds=now.microsecond)
         # run_time = now + timedelta(seconds=5)
         run_time = mktime(run_time.timetuple())
         self.scheduler.enterabs(run_time, 1, self.__class__.period_hour_run)
