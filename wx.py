@@ -5,7 +5,7 @@ from platform import system
 import itchat
 from itchat.content import TEXT, RECORDING, ATTACHMENT, PICTURE, VIDEO, SHARING, NOTE
 
-from global_var import msg_deque
+from global_var import msg_deque, robot_name
 from handler import MsgHandler, HereScheduler
 
 if not Path('backup').exists():
@@ -50,7 +50,7 @@ def backup_revoke(msg):
 
 
 def login_start():
-    itchat.send('小薇：开始工作啦！', 'filehelper')
+    itchat.send(f'{robot_name}：开始工作啦！', 'filehelper')
 
 
 def logout():

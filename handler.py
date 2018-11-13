@@ -6,7 +6,7 @@ from time import mktime, sleep
 import itchat
 import schedule
 
-from global_var import msg_deque, tz_beijing
+from global_var import msg_deque, tz_beijing, r, robot_name
 
 
 class BaseMsgHandler:
@@ -83,16 +83,9 @@ class MsgHandler(BaseMsgHandler):
         1.在吗，在不在，zaima,在ma zai吗，在么
 
         """
-        if self.msg['Type'] == 'Text':
-            message = self.msg.text
-            # reply is online?
-            certain_text = ['在吗', '在不在', 'zaima', '在ma', 'zai吗', '在么']
-            if any([i in message for i in certain_text]):
-                reply = f"消息助手：\n此消息已拦截。\n有事请直言，不要问在不在。"
-                self.reply_from_user(reply)
-            elif self.is_me() and any([i == message for i in ['?', '？']]):
-                # is alive?
-                self.notice_to_me('小薇：正在工作!')
+        self.is_online()
+        self.is_alive()
+        self.query_word()
 
     def save_msg(self):
         """save msg to  message_deque,if not text，and save file to backup/"""
@@ -123,10 +116,71 @@ class MsgHandler(BaseMsgHandler):
                 file = m0[1]['content']
                 Path('backup', file).unlink()
 
+    def is_online(self):
+        if self.msg['Type'] == 'Text':
+            message = self.msg.text
+            # reply is online?
+            certain_text = ['在吗', '在不在', 'zaima', '在ma', 'zai吗', '在么']
+            if any([i in message for i in certain_text]):
+                reply = f"消息助手：\n此消息已拦截。\n有事请直言，不要问在不在。"
+                self.reply_from_user(reply)
+
+    def is_alive(self):
+        if self.msg['Type'] == 'Text':
+            message = self.msg.text
+            if self.is_me() and any([i == message for i in ['?', '？']]):
+                # is alive?
+                self.notice_to_me(f'{robot_name}：正在工作!')
+
+    def query_word(self):
+        """query word in redis by ?"""
+        if self.msg['Type'] == 'Text':
+            text = self.msg.text
+            if text.startswith('?') or text.startswith('？'):
+                word = text[1:]
+                res = r.hgetall(word)
+                if len(res) == 0:
+                    # word not in redis
+                    message = f'报告：{robot_name}的字典里没有这个东西！'
+                else:
+                    res_type = res[b'type']
+                    # char,word,idiom,xhy
+                    if res_type == b'char':
+                        explain = res[b'explain'].decode('utf8')
+                        pinyin = res[b'pinyin'].decode('utf8')
+                        message = f"{word}:\n" \
+                                  f"拼音：{pinyin}\n" \
+                                  f"解释：{explain}"
+                    elif res_type == b'word':
+                        explain = res[b'explain'].decode('utf8')
+                        message = f"{word}:\n" \
+                                  f"解释：{explain}"
+                    elif res_type == b'idiom':
+                        explain = res[b'explain'].decode('utf8')
+                        pinyin = res[b'pinyin'].decode('utf8')
+                        eg = res[b'e.g'].decode('utf8')
+                        from0 = res[b'from'].decode('utf8')
+                        message = f"{word}:\n" \
+                                  f"拼音：{pinyin}\n" \
+                                  f"解释：{explain}\n" \
+                                  f"例：{eg}\n" \
+                                  f"出处：{from0}"
+                    elif res_type == b'xhy':
+                        explain = res[b'explain'].decode('utf8')
+                        message = f"{word}:\n" \
+                                  f"解释：{explain}"
+                    else:
+                        message = ''
+                if self.is_me():
+                    self.notice_to_me(message)
+                else:
+                    self.reply_from_user(message)
+
 
 class Wechat:
     @classmethod
     def send_to_friend(cls, msg: str = '', remark_name: str = '', nick_name: str = '', alive=False):
+        """send msg to friend"""
         if alive:
             itchat.send(msg, toUserName='filehelper')
         else:
@@ -179,4 +233,3 @@ class HereScheduler:
         run_time = mktime(run_time.timetuple())
         self.scheduler.enterabs(run_time, 1, self.__class__.period_hour_run)
         self.scheduler.run()
-
