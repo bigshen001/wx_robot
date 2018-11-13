@@ -88,11 +88,11 @@ class MsgHandler(BaseMsgHandler):
             # reply is online?
             certain_text = ['在吗', '在不在', 'zaima', '在ma', 'zai吗', '在么']
             if any([i in message for i in certain_text]):
-                reply = f"消息助手：此消息已拦截。\n有事请直言，不要问在不在"
+                reply = f"消息助手：\n此消息已拦截。\n有事请直言，不要问在不在。"
                 self.reply_from_user(reply)
             elif self.is_me() and any([i == message for i in ['?', '？']]):
                 # is alive?
-                self.notice_to_me('Still Alive!')
+                self.notice_to_me('小薇：正在工作!')
 
     def save_msg(self):
         """save msg to  message_deque,if not text，and save file to backup/"""

@@ -50,7 +50,7 @@ def backup_revoke(msg):
 
 
 def login_start():
-    itchat.send('自动回复启动', 'filehelper')
+    itchat.send('小薇：开始工作啦！', 'filehelper')
 
 
 def logout():
