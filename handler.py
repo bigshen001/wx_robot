@@ -1,3 +1,4 @@
+import time
 from datetime import timedelta, datetime, date
 from pathlib import Path
 from sched import scheduler
@@ -64,6 +65,9 @@ class BaseMsgHandler:
         if today23 < self.msg_time < tomorrow7:
             return True
 
+    def is_msg_text(self):
+        return self.msg['Type'] == 'Text'
+
 
 class MsgHandler(BaseMsgHandler):
     def sleep_auto_reply(self):
@@ -85,6 +89,7 @@ class MsgHandler(BaseMsgHandler):
         """
         self.is_online()
         self.is_alive()
+        self.is_new_year()
         self.query_word()
 
     def save_msg(self):
@@ -117,7 +122,7 @@ class MsgHandler(BaseMsgHandler):
                 Path('backup', file).unlink()
 
     def is_online(self):
-        if self.msg['Type'] == 'Text':
+        if self.is_msg_text():
             message = self.msg.text
             # reply is online?
             certain_text = ['在吗', '在不在', 'zaima', '在ma', 'zai吗', '在么']
@@ -125,8 +130,18 @@ class MsgHandler(BaseMsgHandler):
                 reply = f"消息助手：\n此消息已拦截。\n有事请直言，不要问在不在。"
                 self.reply_from_user(reply)
 
+    def is_new_year(self):
+        if self.is_msg_text():
+            message = self.msg.text
+            # reply is new year?
+            certain_text = ['新年', '快乐', '春节', '除夕']
+            if any([i in message for i in certain_text]):
+                time.sleep(0.5)
+                reply = f"同乐同乐呀！"
+                self.reply_from_user(reply)
+
     def is_alive(self):
-        if self.msg['Type'] == 'Text':
+        if self.is_msg_text():
             message = self.msg.text
             if self.is_me() and any([i == message for i in ['?', '？']]):
                 # is alive?
@@ -134,7 +149,7 @@ class MsgHandler(BaseMsgHandler):
 
     def query_word(self):
         """query word in redis by ?"""
-        if self.msg['Type'] == 'Text':
+        if self.is_msg_text():
             text = self.msg.text
             if text.startswith('?') or text.startswith('？'):
                 word = text[1:]
@@ -149,26 +164,26 @@ class MsgHandler(BaseMsgHandler):
                         explain = res[b'explain'].decode('utf8')
                         pinyin = res[b'pinyin'].decode('utf8')
                         message = f"{word}:\n" \
-                                  f"拼音：{pinyin}\n" \
-                                  f"解释：{explain}"
+                            f"拼音：{pinyin}\n" \
+                            f"解释：{explain}"
                     elif res_type == b'word':
                         explain = res[b'explain'].decode('utf8')
                         message = f"{word}:\n" \
-                                  f"解释：{explain}"
+                            f"解释：{explain}"
                     elif res_type == b'idiom':
                         explain = res[b'explain'].decode('utf8')
                         pinyin = res[b'pinyin'].decode('utf8')
                         eg = res[b'e.g'].decode('utf8')
                         from0 = res[b'from'].decode('utf8')
                         message = f"{word}:\n" \
-                                  f"拼音：{pinyin}\n" \
-                                  f"解释：{explain}\n" \
-                                  f"例：{eg}\n" \
-                                  f"出处：{from0}"
+                            f"拼音：{pinyin}\n" \
+                            f"解释：{explain}\n" \
+                            f"例：{eg}\n" \
+                            f"出处：{from0}"
                     elif res_type == b'xhy':
                         explain = res[b'explain'].decode('utf8')
                         message = f"{word}:\n" \
-                                  f"解释：{explain}"
+                            f"解释：{explain}"
                     else:
                         message = ''
                 if self.is_me():
